@@ -60,11 +60,29 @@ validate_biz_rule(M, Model, sig) ->
       lager:error("verify mcht sig error . Reason = ~p,Model = ~p", [X, Model]),
       throw({validate_fail, <<"11">>, <<"签名验证失败"/utf8>>})
   end;
-validate_biz_rule(_M, _Model, quota) ->
+%% txn_amt not for batch_collect
+%% must according to detailed txn
+validate_biz_rule(pg_mcht_protocol_req_batch_collect, _Model, quota) ->
   ok;
+validate_biz_rule(M, Model, quota) ->
+  try
+    pass = pg_quota:check(pg_model:get(M, Model, mcht_id),
+      pg_mcht_protocol:option(M, txn_type),
+      pg_model:get(M, Model, txn_amt)),
+    ok
+  catch
+    _:{badmatch, X} ->
+      lager:error("quota check failed, Model = ~p", [Model]),
+      throw({validate_fail, <<"33">>, <<"交易金额超限（单笔/当日/当月），请联系上游渠道处理"/utf8>>})
+  end;
 validate_biz_rule(M, Model, payment_method) ->
   do_validate_txn_type(M, Model);
-validate_biz_rule(M, Model, txn_amt) ->
+%% txn_amt not for batch_collect
+%% must according to detailed txn
+validate_biz_rule(pg_mcht_protocol_req_batch_collect, _Model, txn_amt) ->
+  ok;
+validate_biz_rule(M, Model, txn_amt)
+  when (M =/= pg_mcht_protocol_req_batch_collect) ->
   try
     TxnAmtMin = pg_mcht_protocol:limit(txn_amt),
     TxnAmt = pg_model:get(M, Model, txn_amt),

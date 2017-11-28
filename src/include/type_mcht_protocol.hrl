@@ -36,12 +36,13 @@
 
 
 -type query_id() :: byte23_up().
--type quota() :: integer().
+-type limit() :: integer().
 
 -type txn_count() :: non_neg_integer().
 -type req_reserved() :: binary().
 -type batch_no() :: integer().
 -type file_content() :: binary().
+-type txn_type() :: pay| collect |batch_collect|query|refund|bank_card_id_verify|id_verify.
 
 -export_type([
   mcht_id/0
@@ -63,9 +64,10 @@
   , id_name/0
   , mobile/0
   , bank_id/0
-  , quota/0
+  , limit/0
   , txn_count/0
   , req_reserved/0
   , batch_no/0
   , file_content/0
+  , txn_type/0
 ]).
